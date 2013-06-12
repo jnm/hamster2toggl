@@ -36,22 +36,32 @@ def getDate():
 
 def fetch_config(configFileName='hamster2toggl.config'):
     configPath = os.path.join(os.path.split(os.path.abspath(sys.argv[0]))[0],configFileName)
-    config = ConfigParser.RawConfigParser()
-    config.read(configPath)
-    configProperties = config.defaults()
-    return configProperties
+    config_parser = ConfigParser.RawConfigParser()
+    config_parser.read(configPath)
+    config = config_parser.defaults()
+    return config
 
-def fetch_db(dataFile, date):
+def fetch_db(dataFile, date, category):
     # http://docs.python.org/library/sqlite3.html
-    date = ("%"+getDate()+"%", "%"+getDate()+"%") # check that we get just today
+    date = "%"+getDate()+"%"
     connection = sqlite3.connect(dataFile)
     dbCursor = connection.cursor()
-    dbCursor.execute("""SELECT
+    if category:
+        dbCursor.execute("""SELECT
+            activities.name,facts.start_time,facts.end_time,facts.description,categories.name
+            FROM activities
+            JOIN facts ON activities.id = facts.activity_id
+            JOIN categories ON activities.category_id = categories.id
+            WHERE facts.start_time LIKE ?
+            AND facts.end_time LIKE ?
+            AND categories.name LIKE ?""", (date, date, category))
+    else:
+        dbCursor.execute("""SELECT
             activities.name,facts.start_time,facts.end_time,facts.description
             FROM activities
             JOIN facts ON activities.id = facts.activity_id
             WHERE facts.start_time LIKE ?
-            AND facts.end_time LIKE ?""", date)
+            AND facts.end_time LIKE ?""", (date, date))
     return dbCursor
 
 def trans(date_string):
@@ -65,9 +75,13 @@ if __name__ == '__main__':
         '-H "Content-type: application/json" ' \
         '-d \'{"time_entry":{"description":"%s","start":"%s","duration":%s,"pid":%s}}\' ' \
         '-X POST https://www.toggl.com/api/v8/time_entries'
-    # each entry is e.g.:
-    # (u'test1', u'2013-06-04 15:01:14', u'2013-06-04 15:30:49', None)
-    for entry in fetch_db(config['db'], getDate()):
+    db = fetch_db(
+            config['db'],
+            getDate(),
+            config.get('category', '').strip())
+    for entry in db:
+        # each entry is e.g.:
+        # (u'test1', u'2013-06-04 15:01:14', u'2013-06-04 15:30:49', None, None)
         start = trans(entry[1])
         end = trans(entry[2])
         concrete_curl = curl % (

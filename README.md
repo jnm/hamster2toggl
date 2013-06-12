@@ -19,6 +19,8 @@ To run it, just
       Settings/Projects and click on one of your projects
     - timezone: hours to add or substract from your entries in hamster
       to convert them to UTC
+    - category: the hamster category (others will be ignored). If it has no
+      value, all entries will be used.
 
 - stop hamster
 
