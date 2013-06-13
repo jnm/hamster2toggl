@@ -23,7 +23,6 @@
 # imports {{{1
 import datetime
 import sqlite3
-import datetime
 import os
 import sys
 import ConfigParser
