@@ -27,20 +27,20 @@ import os
 import sys
 import ConfigParser
 
-def getDate():
+def getDate(): #{{{1
     date = datetime.date.today()
     if len(sys.argv) == 2:
         date = date - datetime.timedelta( int(sys.argv[1]) )
     return date.isoformat()
 
-def fetch_config(configFileName='hamster2toggl.config'):
+def fetch_config(configFileName='hamster2toggl.config'): #{{{1
     configPath = os.path.join(os.path.split(os.path.abspath(sys.argv[0]))[0],configFileName)
     config_parser = ConfigParser.RawConfigParser()
     config_parser.read(configPath)
     config = config_parser.defaults()
     return config
 
-def fetch_db(dataFile, date, category):
+def fetch_db(dataFile, date, category): #{{{1
     # http://docs.python.org/library/sqlite3.html
     date = "%"+getDate()+"%"
     connection = sqlite3.connect(dataFile)
@@ -63,12 +63,12 @@ def fetch_db(dataFile, date, category):
             AND facts.end_time LIKE ?""", (date, date))
     return dbCursor
 
-def trans(date_string):
+def trans(date_string): #{{{1
     """ 2013-01-01 15:00:00 -> datetime """
     date_string = date_string[:19]
     return datetime.datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
 
-if __name__ == '__main__':
+if __name__ == '__main__': #{{{1
     config = fetch_config()
     # https://github.com/toggl/toggl_api_docs/blob/master/chapters/time_entries.md
     curl = 'curl -v -u %s:api_token ' \
