@@ -65,6 +65,7 @@ def fetch_db(dataFile, date, category):
 
 def trans(date_string):
     """ 2013-01-01 15:00:00 -> datetime """
+    date_string = date_string[:19]
     return datetime.datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
 
 if __name__ == '__main__':
