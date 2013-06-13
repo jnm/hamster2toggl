@@ -75,19 +75,19 @@ if __name__ == '__main__':
         '-d \'{"time_entry":{"description":"%s","start":"%s","duration":%s,"pid":%s}}\' ' \
         '-X POST https://www.toggl.com/api/v8/time_entries'
     db = fetch_db(
-            config['db'],
+            config['hamster_db'],
             getDate(),
-            config.get('category', '').strip())
+            config.get('hamster_category', '').strip())
     for entry in db:
         # each entry is e.g.:
         # (u'test1', u'2013-06-04 15:01:14', u'2013-06-04 15:30:49', None, None)
         start = trans(entry[1])
         end = trans(entry[2])
         concrete_curl = curl % (
-            config['key'],
+            config['toggl_key'],
             entry[0],
             (start + datetime.timedelta(hours = int(config['timezone']))).isoformat() + 'Z',
             (end-start).seconds,
-            config['pid'])
+            config['toggl_project_id'])
         print concrete_curl
         os.system(concrete_curl)

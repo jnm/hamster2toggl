@@ -12,14 +12,14 @@ To run it, just
 
 * edit ``hamster2toggl.config`` and replace the example values:
 
-  * db: the location of the hamster database
-  * key: the API token you see in toggl when you go to My Profile
-  * pid: the project id that you see in the toggl url when you go to
-    Settings/Projects and click on one of your projects
-  * timezone: hours to add or substract from your entries in hamster
+  * ``hamster_db``: the filename of the hamster database
+  * ``toggl_key``: the API token you see in toggl when you go to My Profile
+  * ``toggl_project_id``: the project id that you see in the toggl url when
+    you go to Settings/Projects and click on one of your projects
+  * ``timezone``: hours to add or substract from your entries in hamster
     to convert them to UTC
-  * category: the hamster category (others will be ignored). If it has no
-    value, all entries will be used.
+  * ``hamster_category``: the hamster category (others will be ignored). If it
+    has no value, all entries will be used.
 
 * stop hamster
 
