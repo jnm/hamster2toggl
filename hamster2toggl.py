@@ -1,4 +1,4 @@
-#!usr/bin/env python
+#!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 # vi:expandtab:tabstop=4 shiftwidth=4 textwidth=79 foldmethod=marker
 # GPL {{{1
