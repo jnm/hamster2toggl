@@ -27,5 +27,15 @@ To run it, just
 
     python hamster2toggl.py
 
+  The above will upload today's data. Instead::
+
+    python hamster2toggl.py 1
+
+  will upload yesterday's data, and::
+
+    python hamster2toggl.py 23
+
+  will upload the data of 23 days ago.
+
 .. _hamster: http://projecthamster.wordpress.com/about/
 .. _toggl: https://www.toggl.com/
