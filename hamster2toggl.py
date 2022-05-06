@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-# vi:expandtab:tabstop=4 shiftwidth=4 textwidth=79 foldmethod=marker
-# GPL {{{1
+#!/usr/bin/env python3
 #############################################################################
 # Copyright 2013 Ivan F. Villanueva B. <ivan ät wikical.com>,
 #
@@ -20,27 +17,26 @@
 #############################################################################
 # Inspired by https://github.com/shaftoe/redminetimesync
 
-# imports {{{1
 import datetime
 import sqlite3
 import os
 import sys
-import ConfigParser
+import configparser
 
-def getDate(): #{{{1
+def getDate():
     date = datetime.date.today()
     if len(sys.argv) == 2:
         date = date - datetime.timedelta( int(sys.argv[1]) )
     return date.isoformat()
 
-def fetch_config(configFileName='hamster2toggl.config'): #{{{1
+def fetch_config(configFileName='hamster2toggl.config'):
     configPath = os.path.join(os.path.split(os.path.abspath(sys.argv[0]))[0],configFileName)
-    config_parser = ConfigParser.RawConfigParser()
+    config_parser = configparser.RawConfigParser()
     config_parser.read(configPath)
     config = config_parser.defaults()
     return config
 
-def fetch_db(dataFile, date, category): #{{{1
+def fetch_db(dataFile, date, category):
     # http://docs.python.org/library/sqlite3.html
     date = "%"+getDate()+"%"
     connection = sqlite3.connect(dataFile)
@@ -63,12 +59,12 @@ def fetch_db(dataFile, date, category): #{{{1
             AND facts.end_time LIKE ?""", (date, date))
     return dbCursor
 
-def trans(date_string): #{{{1
+def trans(date_string):
     """ 2013-01-01 15:00:00 -> datetime """
     date_string = date_string[:19]
     return datetime.datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
 
-if __name__ == '__main__': #{{{1
+if __name__ == '__main__':
     config = fetch_config()
     # https://github.com/toggl/toggl_api_docs/blob/master/chapters/time_entries.md
     curl = 'curl -v -u %s:api_token ' \
@@ -90,5 +86,5 @@ if __name__ == '__main__': #{{{1
             (start + datetime.timedelta(hours = int(config['timezone']))).isoformat() + 'Z',
             (end-start).seconds,
             config['toggl_project_id'])
-        print concrete_curl
+        print(concrete_curl)
         os.system(concrete_curl)
