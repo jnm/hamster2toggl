@@ -1,6 +1,5 @@
 [DEFAULT]
 hamster_db: /home/ivan/.local/share/hamster-applet/hamster.db
 toggl_key: 123456789abcdef123456789abcdefgh
-toggl_project_id: 1234567
-timezone: -2
-hamster_category: grical
+toggl_workspace_id: 1234567
+hamster_category: Work
