@@ -65,7 +65,14 @@ db_cursor.execute('select id, name from tags where name like "tp::%::%"')
 toggl_project_id_to_hamster_tag = {}
 for row in db_cursor:
     tag = HamsterTag(*row)
-    toggl_project_id = int(tag.name.split('::')[-1])
+    try:
+        toggl_project_id = int(tag.name.split('::')[-1])
+    except (KeyError, ValueError):
+        print(
+            f'The existing tag name "{tag.name}" does not have the expected '
+            'format'
+        )
+        raise
     toggl_project_id_to_hamster_tag[toggl_project_id] = tag
 
 no_change_count = 0
@@ -89,6 +96,10 @@ for toggl_id, tag_name in project_tags_by_id.items():
             (tag_name, existing_hamster_tag.pk),
         )
         update_count += 1
+        print(
+            f'Updated existing tag "{existing_hamster_tag.name}" to '
+            f'"{tag_name}"'
+        )
     else:
         # insert
         db_cursor.execute(
@@ -96,8 +107,13 @@ for toggl_id, tag_name in project_tags_by_id.items():
             (tag_name,),
         )
         insert_count += 1
+        print(f'Inserted new tag "{tag_name}"')
+
+    # TODO: delete hamster tags, matching the special format, that no longer
+    # exist in toggl?
 
 db_connection.commit()
+print()
 print(
     f'{insert_count} tags added, {update_count} updated, '
     f'{no_change_count} unchanged'
