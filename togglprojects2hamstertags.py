@@ -61,7 +61,10 @@ class HamsterTag:
 
 db_connection = sqlite3.connect(config['hamster_db'])
 db_cursor = db_connection.cursor()
-db_cursor.execute('select id, name from tags where name like "tp::%::%"')
+db_cursor.execute(
+    'select id, name from tags where name like "tp::%::%" '
+    'or name like "xx tp::%::%"'  # manually deactivated tags
+)
 toggl_project_id_to_hamster_tag = {}
 for row in db_cursor:
     tag = HamsterTag(*row)
@@ -90,6 +93,14 @@ for toggl_id, tag_name in project_tags_by_id.items():
             continue
 
     if existing_hamster_tag:
+        # don't update manually deactivated tags
+        if existing_hamster_tag.name.startswith('xx '):
+            print(
+                f'Existing tag "{existing_hamster_tag.name}" is disabled; '
+                f'not overwriting with "{tag_name}"'
+            )
+            no_change_count += 1
+            continue
         # update
         db_cursor.execute(
             'update tags set name = ? where id = ?',
