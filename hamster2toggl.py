@@ -139,6 +139,10 @@ for fact in facts:
     toggl_data = {'time_entry': time_entry}
     toggl_post_queue.append(toggl_data)
 
+if not toggl_post_queue:
+    print('There are no events to upload. Bye!')
+    exit()
+
 print('Ready to upload? Press ENTER to continue or CTRL+C to abort')
 #print('\n'.join((str(d) for d in toggl_post_queue)))
 input()
