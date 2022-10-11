@@ -135,6 +135,7 @@ for fact in facts:
         'duration': (end_time - start_time).seconds,
         'wid': config['toggl_workspace_id'],
         'pid': toggl_project_id,
+        'billable': True,
     }
     toggl_data = {'time_entry': time_entry}
     toggl_post_queue.append(toggl_data)
