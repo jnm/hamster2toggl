@@ -52,6 +52,8 @@ for project in response.json():
         client_name=client_name,
         project_id=project['id'],
     )
+    # Commas cause Hamster to break the tag apart when trying to use it
+    project_tag = project_tag.replace(',', ' /')
     project_tags_by_id[project['id']] = project_tag
 
 @dataclass
