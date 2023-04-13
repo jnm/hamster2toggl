@@ -150,10 +150,14 @@ input()
 
 requests_auth = (config['toggl_key'], 'api_token')
 for toggl_data in toggl_post_queue:
-    print('POST:', toggl_data)
-    response = requests.post(url=TOGGL_URL, auth=requests_auth, json=toggl_data)
-    if response.status_code == 200:
-        print('\tOK!')
-    else:
-        print(f'\tFAILED ({response.status_code}): {response.text}')
+    while True:
+        print('POST:', toggl_data)
+        response = requests.post(url=TOGGL_URL, auth=requests_auth, json=toggl_data)
+        if response.status_code == 200:
+            print('\tOK!')
+            break
+        else:
+            print(f'\tFAILED ({response.status_code}): {response.text}')
+            if input('Try again? (y/n) ').lower() != 'y':
+                break
     time.sleep(1.25)
