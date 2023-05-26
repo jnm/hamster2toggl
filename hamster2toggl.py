@@ -24,6 +24,7 @@ import sqlite3
 import sys
 import time
 
+import dateutil.parser
 import requests
 
 TOGGL_URL = 'https://api.track.toggl.com/api/v8/time_entries'
@@ -88,76 +89,91 @@ def fetch_tags_for_fact(fact_id):
     return list((row[0] for row in db_cursor))
 
 
-days_offset = None
-if len(sys.argv) == 2:
-    days_offset = -1 * int(sys.argv[1])
+def _no_no():
+    sys.stderr.write(f'Usage: {sys.argv[0]} <start date> <end date>\n')
+    sys.exit(1)
 
-query_date = get_query_date(days_offset)
-print('Processing events from', query_date)
+if len(sys.argv) != 3:
+    _no_no()
 
-toggl_post_queue = []
-facts = fetch_facts(query_date, config.get('hamster_category', '').strip())
-for fact in facts:
-    # each entry is e.g.:
-    # ('test1', 123, '2013-06-04 15:01:14', '2013-06-04 15:30:49', None, None)
-    activity, fact_id, start_time, end_time, description = fact[:5]
-    tags = fetch_tags_for_fact(fact_id)
+try:
+    start_date = dateutil.parser.parse(sys.argv[1]).date()
+    end_date = dateutil.parser.parse(sys.argv[2]).date()
+except dateutil.parser.ParserError:
+    _no_no()
 
-    if not end_time:
-        print('WARNING: No end time for', fact, tags)
-        print('Press ENTER to continue and omit this entry or CTRL+C to abort')
-        input()
-        continue
-
-    start_time = datetime_from_hamster(start_time)
-    end_time = datetime_from_hamster(end_time)
-
-    toggl_project_id = None
-    for tag in tags.copy():
-        # special tag format: `tp::project name::project id`
-        if tag.startswith('tp::'):
-            toggl_project_id = int(tag.split('::')[-1])
-            tags.remove(tag)
-            break
-    if toggl_project_id is None:
-        print('WARNING: No project ID found in', fact, tags)
-
-    toggl_description = ', '.join(tags)
-    if description:
-        toggl_description += f': {description}'
-    toggl_description += f' [{fact_id}]'
-
-    # https://github.com/toggl/toggl_api_docs/blob/master/chapters/time_entries.md
-    time_entry = {
-        'created_with': 'jnm test 20220506',
-        'description': toggl_description,
-        'start': datetime_to_js(start_time),
-        'duration': (end_time - start_time).seconds,
-        'wid': config['toggl_workspace_id'],
-        'pid': toggl_project_id,
-        'billable': True,
-    }
-    toggl_data = {'time_entry': time_entry}
-    toggl_post_queue.append(toggl_data)
-
-if not toggl_post_queue:
-    print('There are no events to upload. Bye!')
-    exit()
-
+print(f'Selected date range {start_date} to {end_date}')
 print('Ready to upload? Press ENTER to continue or CTRL+C to abort')
-#print('\n'.join((str(d) for d in toggl_post_queue)))
 input()
 
-requests_auth = (config['toggl_key'], 'api_token')
-for toggl_data in toggl_post_queue:
-    while True:
-        print('POST:', toggl_data)
-        response = requests.post(url=TOGGL_URL, auth=requests_auth, json=toggl_data)
-        if response.status_code == 200:
-            print('\tOK!')
-            break
-        else:
-            print(f'\tFAILED ({response.status_code}): {response.text}')
-            if input('Try again? (y/n) ').lower() != 'y':
+query_date = start_date
+while query_date <= end_date:
+    print('Processing events from', query_date)
+    toggl_post_queue = []
+    facts = fetch_facts(
+        query_date.isoformat(), config.get('hamster_category', '').strip()
+    )
+    for fact in facts:
+        # each entry is e.g.:
+        # ('test1', 123, '2013-06-04 15:01:14', '2013-06-04 15:30:49', None, None)
+        activity, fact_id, start_time, end_time, description = fact[:5]
+        tags = fetch_tags_for_fact(fact_id)
+
+        if not end_time:
+            print('WARNING: No end time for', fact, tags)
+            print('Press ENTER to continue and omit this entry or CTRL+C to abort')
+            input()
+            continue
+
+        start_time = datetime_from_hamster(start_time)
+        end_time = datetime_from_hamster(end_time)
+
+        toggl_project_id = None
+        for tag in tags.copy():
+            # special tag format: `tp::project name::project id`
+            if tag.startswith('tp::'):
+                toggl_project_id = int(tag.split('::')[-1])
+                tags.remove(tag)
                 break
-    time.sleep(1.25)
+        if toggl_project_id is None:
+            print('WARNING: No project ID found in', fact, tags)
+            print('Press ENTER to continue or CTRL+C to abort')
+            input()
+
+        toggl_description = ', '.join(tags)
+        if description:
+            toggl_description += f': {description}'
+        toggl_description += f' [{fact_id}]'
+
+        # https://github.com/toggl/toggl_api_docs/blob/master/chapters/time_entries.md
+        time_entry = {
+            'created_with': 'jnm test 20220506',
+            'description': toggl_description,
+            'start': datetime_to_js(start_time),
+            'duration': (end_time - start_time).seconds,
+            'wid': config['toggl_workspace_id'],
+            'pid': toggl_project_id,
+            'billable': True,
+        }
+        toggl_data = {'time_entry': time_entry}
+        toggl_post_queue.append(toggl_data)
+
+    query_date += datetime.timedelta(days=1)
+
+    if not toggl_post_queue:
+        print('There are no events to upload. Bye!')
+        continue
+
+    requests_auth = (config['toggl_key'], 'api_token')
+    for toggl_data in toggl_post_queue:
+        while True:
+            print('POST:', toggl_data)
+            response = requests.post(url=TOGGL_URL, auth=requests_auth, json=toggl_data)
+            if response.status_code == 200:
+                print('\tOK!')
+                break
+            else:
+                print(f'\tFAILED ({response.status_code}): {response.text}')
+                if input('Try again? (y/n) ').lower() != 'y':
+                    break
+        time.sleep(1.25)
