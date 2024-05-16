@@ -27,7 +27,7 @@ import time
 import dateutil.parser
 import requests
 
-TOGGL_URL = 'https://api.track.toggl.com/api/v8/time_entries'
+TOGGL_URL = 'https://api.track.toggl.com/api/v9/workspaces/{workspace_id}/time_entries'
 CONFIG_FILE = 'hamster2toggl.config'
 
 config_path = os.path.join(
@@ -37,6 +37,10 @@ config_path = os.path.join(
 config_parser = configparser.RawConfigParser()
 config_parser.read(config_path)
 config = config_parser.defaults()
+
+time_entries_url = TOGGL_URL.format(
+    workspace_id=config['toggl_workspace_id']
+)
 
 db_connection = sqlite3.connect(config['hamster_db'])
 
@@ -145,17 +149,16 @@ while query_date <= end_date:
             toggl_description += f': {description}'
         toggl_description += f' [{fact_id}]'
 
-        # https://github.com/toggl/toggl_api_docs/blob/master/chapters/time_entries.md
-        time_entry = {
+        # https://engineering.toggl.com/docs/api/time_entries#post-timeentries
+        toggl_data = {
             'created_with': 'jnm test 20220506',
             'description': toggl_description,
             'start': datetime_to_js(start_time),
             'duration': (end_time - start_time).seconds,
-            'wid': config['toggl_workspace_id'],
-            'pid': toggl_project_id,
+            'workspace_id': int(config['toggl_workspace_id']),
+            'project_id': int(toggl_project_id),
             'billable': True,
         }
-        toggl_data = {'time_entry': time_entry}
         toggl_post_queue.append(toggl_data)
 
     query_date += datetime.timedelta(days=1)
@@ -168,7 +171,7 @@ while query_date <= end_date:
     for toggl_data in toggl_post_queue:
         while True:
             print('POST:', toggl_data)
-            response = requests.post(url=TOGGL_URL, auth=requests_auth, json=toggl_data)
+            response = requests.post(url=time_entries_url, auth=requests_auth, json=toggl_data)
             if response.status_code == 200:
                 print('\tOK!')
                 break
