@@ -9,7 +9,7 @@ import requests
 
 #TOGGL_PROJECTS_URL = 'https://api.track.toggl.com/api/v8/workspaces/{workspace_id}/projects'
 TOGGL_PROJECTS_URL = 'https://api.track.toggl.com/api/v9/me/projects'
-TOGGL_CLIENTS_URL = 'https://api.track.toggl.com/api/v8/workspaces/{workspace_id}/clients'
+TOGGL_CLIENTS_URL = 'https://api.track.toggl.com/api/v9/workspaces/{workspace_id}/clients'
 CONFIG_FILE = 'hamster2toggl.config'
 DEACTIVATED_PREFIX = 'xx '
 
