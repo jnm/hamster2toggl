@@ -135,7 +135,7 @@ while query_date <= end_date:
         toggl_project_id = None
         for tag in tags.copy():
             # special tag format: `tp::project name::project id`
-            if tag.startswith('tp::'):
+            if tag.startswith('tp::'):  # or tag.startswith('xx tp::'):
                 toggl_project_id = int(tag.split('::')[-1])
                 tags.remove(tag)
                 break
@@ -144,9 +144,11 @@ while query_date <= end_date:
             print('Press ENTER to continue or CTRL+C to abort')
             input()
 
-        toggl_description = ', '.join(tags)
-        if description:
-            toggl_description += f': {description}'
+        toggl_description = description or ''
+        if tags:
+            if description:
+                toggl_description += ' - '
+            toggl_description += ', '.join(tags)
         toggl_description += f' [{fact_id}]'
 
         # https://engineering.toggl.com/docs/api/time_entries#post-timeentries
