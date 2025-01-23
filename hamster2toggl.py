@@ -94,8 +94,16 @@ def fetch_tags_for_fact(fact_id):
 
 
 def _no_no():
-    sys.stderr.write(f'Usage: {sys.argv[0]} <start date> <end date>\n')
+    sys.stderr.write(f'Usage: {sys.argv[0]} [--dry-run] <start date> <end date>\n')
     sys.exit(1)
+
+try:
+    # uh yeah maybe use argparse or something
+    sys.argv.remove('--dry-run')
+except ValueError:
+    dry_run = False
+else:
+    dry_run = True
 
 if len(sys.argv) != 3:
     _no_no()
@@ -172,7 +180,10 @@ while query_date <= end_date:
     requests_auth = (config['toggl_key'], 'api_token')
     for toggl_data in toggl_post_queue:
         while True:
-            print('POST:', toggl_data)
+            prefix = '(Would) ' if dry_run else ''
+            print(prefix + 'POST:', toggl_data)
+            if dry_run:
+                break
             response = requests.post(url=time_entries_url, auth=requests_auth, json=toggl_data)
             if response.status_code == 200:
                 print('\tOK!')
@@ -181,4 +192,5 @@ while query_date <= end_date:
                 print(f'\tFAILED ({response.status_code}): {response.text}')
                 if input('Try again? (y/n) ').lower() != 'y':
                     break
-        time.sleep(1.25)
+        if not dry_run:
+            time.sleep(1.25)
