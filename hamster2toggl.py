@@ -90,7 +90,7 @@ def fetch_tags_for_fact(fact_id):
         '(select tag_id from fact_tags where fact_id = ?)',
         (fact_id,)
     )
-    return list((row[0] for row in db_cursor))
+    return set((row[0] for row in db_cursor))
 
 
 def _no_no():
